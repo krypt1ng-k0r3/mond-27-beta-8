@@ -28,11 +28,13 @@ struct tendies: Identifiable, Codable, Hashable {
     }
 
     var preview_url: URL? {
-        URL(string: "https://raw.githubusercontent.com/SerStars/Nugget-Wallpapers/main/\(preview)")
+        if id == 9999 { return nil }
+        return URL(string: "https://raw.githubusercontent.com/SerStars/Nugget-Wallpapers/main/\(preview)")
     }
 
     var download_url: URL? {
-        URL(string: "https://raw.githubusercontent.com/SerStars/Nugget-Wallpapers/main/\(url)")
+        if id == 9999 { return nil }
+        return URL(string: "https://raw.githubusercontent.com/SerStars/Nugget-Wallpapers/main/\(url)")
     }
 }
 
@@ -70,13 +72,11 @@ private extension Array where Element: Hashable {
 }
 
 func download_tendies(_ wallpaper: tendies) async throws -> URL {
-    // Se è la tendie custom locale, evitiamo il download remoto e gestiamo il percorso locale
     if wallpaper.id == 9999 {
         let destination = URL(fileURLWithPath: AppPaths.tendies, isDirectory: true)
-            .appendingPathComponent("esigned_text_payload.json")
-        // Creazione di un payload di fallback locale se necessario
-        let dummyData = "{\"text\": \"This phone is... Uhhh... Esigned?\"}".data(using: .utf8)!
-        try dummyData.write(to: destination, options: .atomic)
+            .appendingPathComponent("esigned_status.json")
+        let payloadData = "{\"status\": \"This phone is... Uhhh... Esigned?\"}".data(using: .utf8)!
+        try payloadData.write(to: destination, options: .atomic)
         return destination
     }
 
@@ -124,12 +124,11 @@ final class TendiesVM {
         loading = true
         error_msg = nil
 
-        // Definizione della tua tendie custom
         let customEsignedTendie = tendies(
             id: 9999,
-            name: "Esigned Status",
+            name: "Esign Status (if you have esign you can use this even if you don't have it lol)",
             description: "This phone is... Uhhh... Esigned?",
-            url: "esigned_text_payload",
+            url: "esigned_status",
             preview: "esigned_preview",
             authors: "MastersScripts",
             contest: "custom"
@@ -137,11 +136,9 @@ final class TendiesVM {
 
         do {
             let fetched = try await service.fetch_tendies()
-            // Inserisce la tua tendie in cima alla lista remota
             wallpapers = [customEsignedTendie] + fetched
         } catch {
             error_msg = error.localizedDescription
-            // Fallback offline: mostra comunque la tua tendie se la rete fallisce
             wallpapers = [customEsignedTendie]
         }
 
